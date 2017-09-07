@@ -30,8 +30,13 @@
  */
 package com.espark.adarsh.configuration.security;
 
+import java.util.Arrays;
+
+import org.omg.CORBA.Environment;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configurers.ldap.LdapAuthenticationProviderConfigurer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -81,10 +86,26 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(final AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
-        authenticationManagerBuilder.ldapAuthentication()
-        .contextSource().url("ldaps://192.168.100.123:636/dc=c9,dc=local")
-        .managerDn("uid=Admin,cn=Users,dc=c9,dc=local").managerPassword("Cl0ud9er$")
+    	LdapContextSource contextSource = new LdapContextSource();
+        contextSource.setUrl("ldaps://192.168.100.123:3269/");
+        contextSource.setBase("DC=c9,DC=local");
+        contextSource.setUserDn("CN=Admin,CN=Users,DC=c9,DC=local");
+        contextSource.setPassword("Cloud9ers");
+        contextSource.afterPropertiesSet();
+        
+        LdapAuthenticationProviderConfigurer<AuthenticationManagerBuilder> ldapAuthenticationProviderConfigurer = authenticationManagerBuilder.ldapAuthentication();
+        ldapAuthenticationProviderConfigurer.contextSource(contextSource)
+        .userSearchFilter("sAMAccountName={0}");
+    
+    	// WAY 2 
+    	/*
+    	authenticationManagerBuilder.ldapAuthentication()
+        .contextSource().url("ldaps://192.168.100.123:3269/dc=c9,dc=local")
+        .managerDn("CN=Admin,cn=Users,dc=c9,dc=local").managerPassword("Cloud9ers")
         .and()
-        .userSearchBase("cn=Users").userSearchFilter("uid{0}");
+        .userSearchFilter("sAMAccountName={0}");
+    	// login with all users except Domain Admin because Domain Admin doesn't have userPrincipal name
+        //.userSearchBase("CN=Users").userSearchFilter("(userPrincipalName={0}@c9.local)");
+         */
     }
 }
